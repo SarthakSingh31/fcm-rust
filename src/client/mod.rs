@@ -43,7 +43,7 @@ impl Client {
     }
 
     fn get_service_key_file_name(&self) -> Result<String, String> {
-        let key_path = match dotenv::var("GOOGLE_APPLICATION_CREDENTIALS") {
+        let key_path = match dotenvy::var("GOOGLE_APPLICATION_CREDENTIALS") {
             Ok(key_path) => key_path,
             Err(err) => return Err(err.to_string()),
         };
