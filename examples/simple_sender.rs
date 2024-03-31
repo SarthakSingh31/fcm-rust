@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         data: Some(data),
         notification: Some(Notification {
             title: Some("I'm high".to_string()),
-            body: Some(format!("it's {}", chrono::Utc::now())),
+            body: Some(format!("it's {}", time::OffsetDateTime::now_utc())),
             ..Default::default()
         }),
         target: Target::Token(device_token),
@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             priority: Some(fcm::AndroidMessagePriority::High),
             notification: Some(AndroidNotification {
                 title: Some("I'm Android high".to_string()),
-                body: Some(format!("Hi Android, it's {}", chrono::Utc::now())),
+                body: Some(format!("Hi Android, it's {}", time::OffsetDateTime::now_utc())),
                 ..Default::default()
             }),
             ..Default::default()

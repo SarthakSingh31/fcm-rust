@@ -1,6 +1,7 @@
-pub use chrono::{DateTime, Duration, FixedOffset};
 use serde::Deserialize;
 use std::{error::Error, fmt, str::FromStr};
+use time::format_description::well_known::Rfc2822;
+pub use time::{Duration, OffsetDateTime};
 
 /// A description of what went wrong with the push notification.
 /// Referred from [Firebase documentation](https://firebase.google.com/docs/cloud-messaging/http-server-ref#table9)
@@ -176,7 +177,7 @@ pub enum RetryAfter {
     Delay(Duration),
 
     /// A point in time until retrying the message is allowed.
-    DateTime(DateTime<FixedOffset>),
+    DateTime(OffsetDateTime),
 }
 
 impl FromStr for RetryAfter {
@@ -186,7 +187,7 @@ impl FromStr for RetryAfter {
         s.parse::<i64>()
             .map(Duration::seconds)
             .map(RetryAfter::Delay)
-            .or_else(|_| DateTime::parse_from_rfc2822(s).map(RetryAfter::DateTime))
+            .or_else(|_| OffsetDateTime::parse(s, &Rfc2822).map(RetryAfter::DateTime))
             .map_err(|e| crate::Error::InvalidMessage(format!("{}", e)))
     }
 }
@@ -194,7 +195,6 @@ impl FromStr for RetryAfter {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{DateTime, Duration};
     use serde_json::json;
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
         let retry_after = RetryAfter::from_str(date).unwrap();
 
         assert_eq!(
-            RetryAfter::DateTime(DateTime::parse_from_rfc2822(date).unwrap()),
+            RetryAfter::DateTime(OffsetDateTime::parse(date, &Rfc2822).unwrap()),
             retry_after,
         );
     }
