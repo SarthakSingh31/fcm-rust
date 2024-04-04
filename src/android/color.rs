@@ -33,7 +33,7 @@ pub struct Color {
 }
 
 impl Color {
-    pub(crate) fn finalize(self) -> ColorInternal {
+    pub(crate) fn finalize(&self) -> ColorInternal {
         ColorInternal {
             red: self.red,
             green: self.green,

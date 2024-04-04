@@ -37,34 +37,34 @@ where
 
 #[derive(Serialize, Debug)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#resource:-message
-pub(crate) struct MessageInternal {
+pub(crate) struct MessageInternal<'m> {
     /// Arbitrary key/value payload, which must be UTF-8 encoded.
     #[serde(skip_serializing_if = "Option::is_none")]
-    data: Option<Value>,
+    data: Option<&'m Value>,
 
     /// Basic notification template to use across all platforms.
     #[serde(skip_serializing_if = "Option::is_none")]
-    notification: Option<NotificationInternal>,
+    notification: Option<NotificationInternal<'m>>,
 
     /// Android specific options for messages sent through FCM connection server.
     #[serde(skip_serializing_if = "Option::is_none")]
-    android: Option<AndroidConfigInternal>,
+    android: Option<AndroidConfigInternal<'m>>,
 
     /// Webpush protocol options.
     #[serde(skip_serializing_if = "Option::is_none")]
-    webpush: Option<WebpushConfigInternal>,
+    webpush: Option<WebpushConfigInternal<'m>>,
 
     /// Apple Push Notification Service specific options.
     #[serde(skip_serializing_if = "Option::is_none")]
-    apns: Option<ApnsConfigInternal>,
+    apns: Option<ApnsConfigInternal<'m>>,
 
     /// Template for FCM SDK feature options to use across all platforms.
     #[serde(skip_serializing_if = "Option::is_none")]
-    fcm_options: Option<FcmOptionsInternal>,
+    fcm_options: Option<FcmOptionsInternal<'m>>,
 
     /// Target to send a message to.
     #[serde(flatten, serialize_with = "output_target")]
-    target: Target,
+    target: &'m Target,
 }
 
 /// A `Message` instance is the main object to send to the FCM API.
@@ -75,29 +75,29 @@ pub struct Message {
     pub data: Option<Value>,
     /// Basic notification template to use across all platforms.
     pub notification: Option<Notification>,
-    /// Android specific options for messages sent through FCM connection server.
-    pub target: Target,
-    /// Webpush protocol options.
-    pub android: Option<AndroidConfig>,
-    /// Apple Push Notification Service specific options.
-    pub webpush: Option<WebpushConfig>,
-    /// Template for FCM SDK feature options to use across all platforms.
-    pub apns: Option<ApnsConfig>,
     /// Target to send a message to.
+    pub target: Target,
+    /// Android specific options for messages sent through FCM connection server.
+    pub android: Option<AndroidConfig>,
+    /// Webpush protocol options.
+    pub webpush: Option<WebpushConfig>,
+    /// Apple Push Notification Service specific options.
+    pub apns: Option<ApnsConfig>,
+    /// Template for FCM SDK feature options to use across all platforms.
     pub fcm_options: Option<FcmOptions>,
 }
 
 impl Message {
     /// Complete the build and get a `MessageInternal` instance
-    pub(crate) fn finalize(self) -> MessageInternal {
+    pub(crate) fn finalize(&self) -> MessageInternal {
         MessageInternal {
-            data: self.data,
-            notification: self.notification.map(|n| n.finalize()),
-            android: self.android.map(|a| a.finalize()),
-            webpush: self.webpush.map(|w| w.finalize()),
-            apns: self.apns.map(|a| a.finalize()),
-            fcm_options: self.fcm_options.map(|f| f.finalize()),
-            target: self.target,
+            data: self.data.as_ref(),
+            notification: self.notification.as_ref().map(|n| n.finalize()),
+            android: self.android.as_ref().map(|a| a.finalize()),
+            webpush: self.webpush.as_ref().map(|w| w.finalize()),
+            apns: self.apns.as_ref().map(|a| a.finalize()),
+            fcm_options: self.fcm_options.as_ref().map(|f| f.finalize()),
+            target: &self.target,
         }
     }
 }

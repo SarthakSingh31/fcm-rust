@@ -12,10 +12,10 @@ fn should_create_new_message() {
         webpush: None,
         apns: None,
         fcm_options: None,
-    }
-    .finalize();
+    };
+    let msg = msg.finalize();
 
-    assert_eq!(msg.target, target);
+    assert_eq!(*msg.target, target);
 }
 
 #[test]
@@ -29,8 +29,8 @@ fn should_leave_nones_out_of_the_json() {
         webpush: None,
         apns: None,
         fcm_options: None,
-    }
-    .finalize();
+    };
+    let msg = msg.finalize();
     let payload = serde_json::to_string(&msg).unwrap();
 
     let expected_payload = json!({

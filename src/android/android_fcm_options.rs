@@ -1,8 +1,8 @@
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
-pub(crate) struct AndroidFcmOptionsInternal {
-    analytics_label: String,
+pub(crate) struct AndroidFcmOptionsInternal<'m> {
+    analytics_label: &'m str,
 }
 
 #[derive(Debug, Default)]
@@ -13,9 +13,9 @@ pub struct AndroidFcmOptions {
 }
 
 impl AndroidFcmOptions {
-    pub(crate) fn finalize(self) -> AndroidFcmOptionsInternal {
+    pub(crate) fn finalize(&self) -> AndroidFcmOptionsInternal {
         AndroidFcmOptionsInternal {
-            analytics_label: self.analytics_label,
+            analytics_label: &self.analytics_label,
         }
     }
 }

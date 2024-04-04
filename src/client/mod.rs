@@ -7,42 +7,49 @@ use reqwest::header::RETRY_AFTER;
 use reqwest::{Body, StatusCode};
 use serde::Serialize;
 
-/// An async client for sending the notification payload.
-pub struct Client {
-    http_client: reqwest::Client,
-}
-
-impl Default for Client {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 // will be used to wrap the message in a "message" field
 #[derive(Serialize)]
 struct MessageWrapper<'a> {
-    #[serde(rename = "message")]
-    message: &'a MessageInternal,
+    message: &'a MessageInternal<'a>,
 }
 
-impl MessageWrapper<'_> {
-    fn new(message: &MessageInternal) -> MessageWrapper {
+impl<'m> MessageWrapper<'m> {
+    fn new(message: &'m MessageInternal) -> MessageWrapper<'m> {
         MessageWrapper { message }
     }
 }
 
+/// An async client for sending the notification payload.
+pub struct Client {
+    http_client: reqwest::Client,
+    service_account: ServiceAccount,
+}
+
 impl Client {
     /// Get a new instance of Client.
-    pub fn new() -> Client {
+    pub async fn new() -> Result<Client, FcmError> {
         let http_client = reqwest::ClientBuilder::new()
             .pool_max_idle_per_host(usize::MAX)
             .build()
             .unwrap();
+        let service_key_file = Self::get_service_key_file_name().expect("Failed to get service key file");
+        let mut service_account = ServiceAccount::from_file(
+            &service_key_file,
+            vec!["https://www.googleapis.com/auth/firebase.messaging"],
+        );
 
-        Client { http_client }
+        service_account
+            .access_token()
+            .await
+            .map_err(|err| FcmError::AuthToken(format!("{err:?}")))?;
+
+        Ok(Client {
+            http_client,
+            service_account,
+        })
     }
 
-    fn get_service_key_file_name(&self) -> Result<String, String> {
+    fn get_service_key_file_name() -> Result<String, String> {
         let key_path = match dotenvy::var("GOOGLE_APPLICATION_CREDENTIALS") {
             Ok(key_path) => key_path,
             Err(err) => return Err(err.to_string()),
@@ -52,7 +59,7 @@ impl Client {
     }
 
     fn read_service_key_file(&self) -> Result<String, String> {
-        let key_path = self.get_service_key_file_name()?;
+        let key_path = Self::get_service_key_file_name()?;
 
         let private_key_content = match std::fs::read(key_path) {
             Ok(content) => content,
@@ -90,7 +97,7 @@ impl Client {
         Ok(project_id.to_string())
     }
 
-    async fn get_auth_token(&self) -> Result<String, String> {
+    async fn get_auth_token(&mut self) -> Result<String, String> {
         let tkn = match self.access_token().await {
             Ok(tkn) => tkn,
             Err(_) => return Err("could not get access token".to_string()),
@@ -99,12 +106,8 @@ impl Client {
         Ok(tkn)
     }
 
-    async fn access_token(&self) -> Result<String, String> {
-        let scopes = vec!["https://www.googleapis.com/auth/firebase.messaging"];
-        let key_path = self.get_service_key_file_name()?;
-
-        let mut service_account = ServiceAccount::from_file(&key_path, scopes);
-        let access_token = match service_account.access_token().await {
+    async fn access_token(&mut self) -> Result<String, String> {
+        let access_token = match self.service_account.access_token().await {
             Ok(access_token) => access_token,
             Err(err) => return Err(err.to_string()),
         };
@@ -114,7 +117,7 @@ impl Client {
         Ok(token_no_bearer.to_string())
     }
 
-    pub async fn send(&self, message: Message) -> Result<FcmResponse, FcmError> {
+    pub async fn send(&mut self, message: &Message) -> Result<FcmResponse, FcmError> {
         let fin = message.finalize();
         let wrapper = MessageWrapper::new(&fin);
         let payload = serde_json::to_vec(&wrapper).unwrap();
@@ -152,7 +155,9 @@ impl Client {
 
         match response_status {
             StatusCode::OK => {
-                let fcm_response: FcmResponse = response.json().await.unwrap();
+                let intermediate: serde_json::Value = response.json().await.unwrap();
+                dbg!(&intermediate);
+                let fcm_response: FcmResponse = serde_json::value::from_value(intermediate).unwrap();
 
                 match fcm_response.error {
                     Some(ErrorReason::Unavailable) => Err(FcmError::ServerError(retry_after)),

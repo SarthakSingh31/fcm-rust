@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         ap.parse_args_or_exit();
     }
 
-    let client = Client::new();
+    let mut client = Client::new().await?;
 
     let data = json!({
         "key": "value",
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         webpush: Some(WebpushConfig { ..Default::default() }),
     };
 
-    let response = client.send(builder).await?;
+    let response = client.send(&builder).await?;
     println!("Sent: {:?}", response);
 
     Ok(())

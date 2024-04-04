@@ -8,27 +8,27 @@ use super::{
 };
 
 #[derive(Serialize, Debug)]
-pub(crate) struct AndroidConfigInternal {
+pub(crate) struct AndroidConfigInternal<'m> {
     #[serde(skip_serializing_if = "Option::is_none")]
-    collapse_key: Option<String>,
+    collapse_key: Option<&'m str>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     priority: Option<AndroidMessagePriority>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    ttl: Option<String>,
+    ttl: Option<&'m str>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    restricted_package_name: Option<String>,
+    restricted_package_name: Option<&'m str>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    data: Option<Value>,
+    data: Option<&'m Value>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    notification: Option<AndroidNotificationInternal>,
+    notification: Option<AndroidNotificationInternal<'m>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    fcm_options: Option<AndroidFcmOptionsInternal>,
+    fcm_options: Option<AndroidFcmOptionsInternal<'m>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     direct_boot_ok: Option<bool>,
@@ -65,15 +65,15 @@ pub struct AndroidConfig {
 }
 
 impl AndroidConfig {
-    pub(crate) fn finalize(self) -> AndroidConfigInternal {
+    pub(crate) fn finalize(&self) -> AndroidConfigInternal {
         AndroidConfigInternal {
-            collapse_key: self.collapse_key,
+            collapse_key: self.collapse_key.as_deref(),
             priority: self.priority,
-            ttl: self.ttl,
-            restricted_package_name: self.restricted_package_name,
-            data: self.data,
-            notification: self.notification.map(|n| n.finalize()),
-            fcm_options: self.fcm_options.map(|f| f.finalize()),
+            ttl: self.ttl.as_deref(),
+            restricted_package_name: self.restricted_package_name.as_deref(),
+            data: self.data.as_ref(),
+            notification: self.notification.as_ref().map(|n| n.finalize()),
+            fcm_options: self.fcm_options.as_ref().map(|f| f.finalize()),
             direct_boot_ok: self.direct_boot_ok,
         }
     }

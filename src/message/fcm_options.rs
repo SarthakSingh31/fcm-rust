@@ -2,9 +2,9 @@ use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#fcmoptions
-pub(crate) struct FcmOptionsInternal {
+pub(crate) struct FcmOptionsInternal<'m> {
     /// Label associated with the message's analytics data.
-    analytics_label: String,
+    analytics_label: &'m str,
 }
 
 #[derive(Debug, Default)]
@@ -15,9 +15,9 @@ pub struct FcmOptions {
 }
 
 impl FcmOptions {
-    pub(crate) fn finalize(self) -> FcmOptionsInternal {
+    pub(crate) fn finalize(&self) -> FcmOptionsInternal {
         FcmOptionsInternal {
-            analytics_label: self.analytics_label,
+            analytics_label: &self.analytics_label,
         }
     }
 }

@@ -8,18 +8,18 @@ use serde::Serialize;
 /// this notification instance when sending a FCM message.
 #[derive(Serialize, Debug, PartialEq)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#notification
-pub(crate) struct NotificationInternal {
+pub(crate) struct NotificationInternal<'m> {
     /// The notification's title.
     #[serde(skip_serializing_if = "Option::is_none")]
-    title: Option<String>,
+    title: Option<&'m str>,
 
     /// The notification's body text.
     #[serde(skip_serializing_if = "Option::is_none")]
-    body: Option<String>,
+    body: Option<&'m str>,
 
     /// Contains the URL of an image that is going to be downloaded on the device and displayed in a notification.
     #[serde(skip_serializing_if = "Option::is_none")]
-    image: Option<String>,
+    image: Option<&'m str>,
 }
 
 #[derive(Debug, Default)]
@@ -36,11 +36,11 @@ pub struct Notification {
 
 impl Notification {
     /// Complete the build and get a `Notification` instance
-    pub(crate) fn finalize(self) -> NotificationInternal {
+    pub(crate) fn finalize(&self) -> NotificationInternal {
         NotificationInternal {
-            title: self.title,
-            body: self.body,
-            image: self.image,
+            title: self.title.as_deref(),
+            body: self.body.as_deref(),
+            image: self.image.as_deref(),
         }
     }
 }

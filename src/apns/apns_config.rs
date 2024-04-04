@@ -5,18 +5,18 @@ use super::apns_fcm_options::{ApnsFcmOptions, ApnsFcmOptionsInternal};
 
 #[derive(Serialize, Debug)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#apnsconfig
-pub(crate) struct ApnsConfigInternal {
+pub(crate) struct ApnsConfigInternal<'m> {
     /// HTTP request headers defined in Apple Push Notification Service.
     #[serde(skip_serializing_if = "Option::is_none")]
-    headers: Option<Value>,
+    headers: Option<&'m Value>,
 
     /// APNs payload as a JSON object, including both aps dictionary and custom payload.
     #[serde(skip_serializing_if = "Option::is_none")]
-    payload: Option<Value>,
+    payload: Option<&'m Value>,
 
     /// Options for features provided by the FCM SDK for iOS.
     #[serde(skip_serializing_if = "Option::is_none")]
-    fcm_options: Option<ApnsFcmOptionsInternal>,
+    fcm_options: Option<ApnsFcmOptionsInternal<'m>>,
 }
 
 #[derive(Debug, Default)]
@@ -31,11 +31,11 @@ pub struct ApnsConfig {
 }
 
 impl ApnsConfig {
-    pub(crate) fn finalize(self) -> ApnsConfigInternal {
+    pub(crate) fn finalize(&self) -> ApnsConfigInternal {
         ApnsConfigInternal {
-            headers: self.headers,
-            payload: self.payload,
-            fcm_options: self.fcm_options.map(|fcm_options| fcm_options.finalize()),
+            headers: self.headers.as_ref(),
+            payload: self.payload.as_ref(),
+            fcm_options: self.fcm_options.as_ref().map(|fcm_options| fcm_options.finalize()),
         }
     }
 }

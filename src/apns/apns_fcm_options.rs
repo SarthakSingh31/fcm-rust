@@ -2,12 +2,12 @@ use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#apnsfcmoptions
-pub(crate) struct ApnsFcmOptionsInternal {
+pub(crate) struct ApnsFcmOptionsInternal<'m> {
     /// Label associated with the message's analytics data.
-    analytics_label: Option<String>,
+    analytics_label: Option<&'m str>,
 
     /// Contains the URL of an image that is going to be displayed in a notification.
-    image: Option<String>,
+    image: Option<&'m str>,
 }
 
 #[derive(Debug, Default)]
@@ -21,10 +21,10 @@ pub struct ApnsFcmOptions {
 }
 
 impl ApnsFcmOptions {
-    pub(crate) fn finalize(self) -> ApnsFcmOptionsInternal {
+    pub(crate) fn finalize(&self) -> ApnsFcmOptionsInternal {
         ApnsFcmOptionsInternal {
-            analytics_label: self.analytics_label,
-            image: self.image,
+            analytics_label: self.analytics_label.as_deref(),
+            image: self.image.as_deref(),
         }
     }
 }

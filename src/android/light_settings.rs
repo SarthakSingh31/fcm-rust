@@ -4,17 +4,17 @@ use super::color::{Color, ColorInternal};
 
 #[derive(Serialize, Debug)]
 /// https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages?authuser=0#LightSettings
-pub(crate) struct LightSettingsInternal {
+pub(crate) struct LightSettingsInternal<'m> {
     /// Set color of the LED with google.type.Color.
     color: ColorInternal,
 
     /// Along with light_off_duration, define the blink rate of LED flashes
     /// Duration format: https://developers.google.com/protocol-buffers/docs/reference/google.protobuf?authuser=0#google.protobuf.Duration
-    light_on_duration: String,
+    light_on_duration: &'m str,
 
     /// Along with light_on_duration, define the blink rate of LED flashes.
     /// Duration format: https://developers.google.com/protocol-buffers/docs/reference/google.protobuf?authuser=0#google.protobuf.Duration
-    light_off_duration: String,
+    light_off_duration: &'m str,
 }
 
 #[derive(Debug, Default)]
@@ -33,11 +33,11 @@ pub struct LightSettings {
 }
 
 impl LightSettings {
-    pub(crate) fn finalize(self) -> LightSettingsInternal {
+    pub(crate) fn finalize(&self) -> LightSettingsInternal {
         LightSettingsInternal {
             color: self.color.finalize(),
-            light_on_duration: self.light_on_duration,
-            light_off_duration: self.light_off_duration,
+            light_on_duration: &self.light_on_duration,
+            light_off_duration: &self.light_off_duration,
         }
     }
 }
