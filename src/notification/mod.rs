@@ -22,7 +22,7 @@ pub(crate) struct NotificationInternal<'m> {
     image: Option<&'m str>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize)]
 pub struct Notification {
     /// The notification's title.
     pub title: Option<String>,
